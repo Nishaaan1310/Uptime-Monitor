@@ -5,6 +5,10 @@ from django.contrib.auth.models import AbstractUser, BaseUserManager
 
 class CustomUserManager(BaseUserManager):
 
+    def normalize_email(self, email):
+        email = super().normalize_email(email)
+        return email.lower() if email else email
+
     def create_user(self, email, password=None, **extra_fields):
         if not email:
             raise ValueError("Users must have an email address")
