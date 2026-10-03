@@ -1,0 +1,33 @@
+.error-alert {
+    color:red;
+}
+
+    
+body {
+    font-family: system-ui, -apple-system, sans-serif;
+    margin: 0;
+    background-color: #f4f5f7;
+}
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem 2rem;
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+}
+ 
+.container {
+    max-width: 500px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.errorlist {
+    color: #dc2626;
+    list-style: none;
+    padding: 0;
+}
+
+
