@@ -7,7 +7,6 @@ from django.views.generic import CreateView
 from .forms import CustomLoginForm, CustomUserCreationForm
 from django.contrib.auth.decorators import login_required
 
-
 # Create your views here.
 
 class SignUpView(CreateView):
