@@ -40,15 +40,16 @@ def monitor_edit(request, pk):
     monitor = get_object_or_404(Monitor, pk=pk, owner=request.user)
     if request.method == "POST":
         form = MonitorForm(request.POST, instance=monitor)
-        if form.is_valid:
+        if form.is_valid():
             form.save()
             return redirect("monitors:dashboard")
     else:
         form = MonitorForm(instance=monitor)
-        return render(request, "monitors/monitor_form.html", {
-            "form": form,
-            "monitor": monitor
-        })
+
+    return render(request, "monitors/monitor_form.html", {
+        "form": form,
+        "monitor": monitor
+    })
 
 
 
