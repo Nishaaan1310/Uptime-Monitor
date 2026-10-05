@@ -1,0 +1,30 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}My App{% endblock %}</title>
+
+        <link rel="stylesheet" href="{% static 'users/styles.css' %}">
+    </head>
+    <body>
+        <nav class="navbar">
+            <div class="nav_links">
+                {% if user.is_authenticated %}
+                    <form id="logout" method="post" action= "{% url 'users:logout' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn-logout" >Log Out</button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'users:login' %}">Log In</a>
+                    <a href="{% url 'users:signup' %}">Sign Up</a>
+                {% endif %}
+            </div>
+        </nav>
+        <main class="container">
+            {% block content %}
+            {% endblock %}
+        </main>
+    </body>
+</html>

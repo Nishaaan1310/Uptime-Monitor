@@ -17,11 +17,7 @@ class SignUpView(CreateView):
 class CustomLoginView(LoginView):
     form_class = CustomLoginForm
     template_name = "users/login.html"
-    next_page = reverse_lazy("users:dashboard")
+    next_page = reverse_lazy("monitors:dashboard")
 
 class CustomLogoutView(LogoutView):
     next_page = "users:login"
-
-@login_required
-def dashboard(request):
-    return render(request, "users/dashboard.html")

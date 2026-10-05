@@ -1,0 +1,30 @@
+{% extends 'users/layout.html' %}
+{% block content %}
+<h2> Welcome to Dashboard </h2>
+<table class="monitor-table">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>URL</th>
+      <th>Interval</th>
+      <th>Active</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for monitor in monitors %}
+      <tr>
+        <td><strong>{{ monitor.name }}</strong></td>
+        <td><a href="{{ monitor.url }}" target="_blank" rel="noopener">{{ monitor.url }}</a></td>
+        <td>{{ monitor.interval_seconds }}s</td>
+        <td>{{ monitor.is_active|yesno:"Active,Paused" }}</td>
+      </tr>
+    {% empty %}
+      <tr>
+        <td colspan="4">
+          No monitors yet. <a href="{% url 'monitors:create' %}">Add your first one</a>.
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
