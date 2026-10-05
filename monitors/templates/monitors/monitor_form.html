@@ -1,0 +1,26 @@
+{% extends 'users/layout.html' %}
+{% block content %}
+
+{% if form.instance.pk %}
+    <h2> Edit Monitor: {{ form.instance.name }}</h2>
+{% else %}
+    <h2>Create New Monitor</h2>
+{% endif %}
+
+<form method="POST">
+    {% csrf_token %}
+    {{ form.as_div }}
+
+    <button type="submit" class="btn-primary">
+        {% if form.instance.pk %}
+            Save Changes
+        {% else %}
+            Create Monitor
+        {% endif %}
+    </button>
+</form>
+
+<br>
+<a href="{% url 'monitors:dashboard' %}"> Cancel. Return to dashboard </a>
+
+{% endblock %}
