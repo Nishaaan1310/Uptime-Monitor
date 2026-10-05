@@ -10,7 +10,7 @@
     <h2>My Monitors</h2>
     <a href="{% url 'monitors:create' %}" class="btn-primary">+ Add New Monitor</a>
   </div>
-  
+
 <table class="monitor-table">
   <thead>
     <tr>
@@ -18,7 +18,10 @@
       <th>URL</th>
       <th>Interval</th>
       <th>Active</th>
+      <th>Status</th>
+      <th>Last Checked</th>
       <th>Actions</th>
+
     </tr>
   </thead>
   <tbody>
@@ -28,6 +31,9 @@
         <td><a href="{{ monitor.url }}" target="_blank" rel="noopener">{{ monitor.url }}</a></td>
         <td>{{ monitor.interval_seconds }}s</td>
         <td>{{ monitor.is_active|yesno:"Active,Paused" }}</td>
+        <td>{{ monitor.get_status_display}}</td>
+        <td>{{ monitor.last_checked_at|default:"Never"}}</td>
+
         <td> 
           <a href="{% url 'monitors:edit' monitor.pk %}" class="btn-edit">Edit</a>
           <a href="{% url 'monitors:delete' monitor.pk %}" class="btn-delete">Delete</a>
@@ -35,7 +41,7 @@
       </tr>
     {% empty %}
       <tr>
-        <td colspan="5">
+        <td colspan="7">
           No monitors yet. <a href="{% url 'monitors:create' %}">Add your first one</a>.
         </td>
       </tr>

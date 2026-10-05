@@ -17,10 +17,16 @@ def is_public_host(hostname):
             ip = ip.ipv4_mapped
         if not ip.is_global:
             return False
+            
     return True
 
 def validate_public_url(value):
-    hostname = urlparse(value).hostname
+    parsed = urlparse(value)
+
+    if parsed.scheme not in ("http", "https"):
+        raise ValidationError("Only HTTP and HTTPS URLs are supported.")
+
+    hostname = parsed.hostname
     if not hostname:
         raise ValidationError("Invalid URL.")
     
