@@ -1,6 +1,8 @@
 from django.db import models
 from django.conf import settings
 from django.core.validators import MinValueValidator
+from django.utils import timezone
+
 from .validators import validate_public_url
 
 # Create your models here.
@@ -20,17 +22,19 @@ class Monitor(models.Model):
     status = models.CharField(max_length=10, choices=Status.choices,
         default = Status.PENDING)
     last_checked_at = models.DateTimeField(null=True, blank=True)
+    next_check_at = models.DateTimeField(default=timezone.now)
 
     def __str__(self):
         return f"{self.name} ({self.url})"
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [models.Index(fields=["is_active", "next_check_at"])]
 
     def is_due(self, now):
         if self.last_checked_at is None:
             return True  
-        return (now- self.last_checked_at).total_seconds() >= self.interval_seconds
+        return (now - self.last_checked_at).total_seconds() >= self.interval_seconds
 
 
 class CheckResult(models.Model):

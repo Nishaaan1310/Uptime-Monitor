@@ -1,10 +1,14 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
+from django.urls import reverse_lazy
+
 from .forms import MonitorForm
 from .models import Monitor
 from django.views.generic import CreateView
+
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.urls import reverse_lazy
+from django.contrib.auth.decorators import login_required
+
+from datetime import timedelta
 
 # Create your views here.
 
@@ -42,7 +46,14 @@ def monitor_edit(request, pk):
         form = MonitorForm(request.POST, instance=monitor)
         if form.is_valid():
             monitor = form.save(commit=False)
-            monitor.save(update_fields=list(form.changed_data))
+            fields = list(form.changed_data)
+
+            if "interval_seconds" in fields and monitor.last_checked_at:
+                monitor.next_check_at = monitor.last_checked_at + timedelta(seconds=monitor.interval_seconds)
+                fields.append("next_check_at")
+
+            monitor.save(update_fields=fields)
+
             return redirect("monitors:dashboard")
     else:
         form = MonitorForm(instance=monitor)

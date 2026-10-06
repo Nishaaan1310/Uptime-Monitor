@@ -20,6 +20,7 @@
       <th>Active</th>
       <th>Status</th>
       <th>Last Checked</th>
+      <th>Next Check At</th>
       <th>Actions</th>
 
     </tr>
@@ -33,6 +34,7 @@
         <td>{{ monitor.is_active|yesno:"Active,Paused" }}</td>
         <td>{{ monitor.get_status_display}}</td>
         <td>{{ monitor.last_checked_at|default:"Never"}}</td>
+        <td>{{ monitor.next_check_at }}</td>
 
         <td> 
           <a href="{% url 'monitors:edit' monitor.pk %}" class="btn-edit">Edit</a>
