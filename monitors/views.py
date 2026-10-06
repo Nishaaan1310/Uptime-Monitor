@@ -41,7 +41,8 @@ def monitor_edit(request, pk):
     if request.method == "POST":
         form = MonitorForm(request.POST, instance=monitor)
         if form.is_valid():
-            form.save()
+            monitor = form.save(commit=False)
+            monitor.save(update_fields=list(form.changed_data))
             return redirect("monitors:dashboard")
     else:
         form = MonitorForm(instance=monitor)
