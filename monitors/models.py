@@ -27,6 +27,11 @@ class Monitor(models.Model):
     class Meta:
         ordering = ["-created_at"]
 
+    def is_due(self, now):
+        if self.last_checked_at is None:
+            return True  
+        return (now- self.last_checked_at).total_seconds() >= self.interval_seconds
+
 
 class CheckResult(models.Model):
     monitor = models.ForeignKey(Monitor, on_delete=models.CASCADE, related_name="results")
