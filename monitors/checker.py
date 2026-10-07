@@ -1,8 +1,30 @@
 import requests
 import time
+from urllib3.util import connection as urllib3_connection
 from dataclasses import dataclass
 from urllib.parse import urlparse
-from .validators import is_public_host
+from .validators import resolve_public_ips, BlockedAddressError
+
+_original_create_connection = urllib3_connection.create_connection
+
+def guarded_create_connection(address, *args, **kwargs):
+    host, port = address
+    host = host.strip("[]")
+    ips = resolve_public_ips(host, port)
+
+    last_error = None
+    for ip in ips:
+        try:
+            return _original_create_connection((ip, port), *args, **kwargs)
+        except OSError as e:
+            last_error = e
+    raise last_error
+
+def install_guard():
+    if urllib3_connection.create_connection is not guarded_create_connection:
+        urllib3_connection.create_connection = guarded_create_connection
+
+
 
 @dataclass(frozen=True)
 class CheckOutcome:
@@ -12,25 +34,34 @@ class CheckOutcome:
     error_message: str = ""
 
 def check_url(url, timeout=10):
-    hostname = urlparse(url).hostname
-    if not hostname or is_public_host(hostname) is not True:
-        return CheckOutcome(is_up=False, error_message="Blocked: host is not a public address.")
-
     start = time.monotonic()
+    
+    guard=install_guard()
 
-    try:
-        response = requests.get(url, timeout=timeout, allow_redirects=False)
+    with requests.Session() as session:
+        session.trust_env = False
+        session.max_redirects = 5
 
-    except requests.exceptions.Timeout:
-        return CheckOutcome(is_up=False, error_message=f"Timed out after {timeout}s")
+        try:
+            response = session.get(url, timeout=timeout)
 
-    except requests.exceptions.RequestException as e:
-        return CheckOutcome(is_up=False, error_message=f"Service error: {e}")
+        except requests.exceptions.TooManyRedirects:
+            return CheckOutcome(is_up=False, error_message=f"Too many redirects (limit 5)")
+
+        except requests.exceptions.Timeout:
+            return CheckOutcome(is_up=False, error_message=f"Timed out after {timeout}s")
+
+        except requests.exceptions.RequestException as e:
+            return CheckOutcome(is_up=False, error_message=f"Service error: {e}")
+        
+        except BlockedAddressError:
+            return CheckOutcome(is_up=False, error_message="Blocked: host resolves to a non-public address.")
 
     elapsed_ms = int((time.monotonic()-start) * 1000)
+
     return CheckOutcome(
-       is_up=response.status_code < 400,
-       status_code=response.status_code,
-       response_time_ms=elapsed_ms
+        is_up=response.status_code < 400,
+        status_code=response.status_code,
+        response_time_ms=elapsed_ms
     )
 
