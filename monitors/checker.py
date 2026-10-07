@@ -1,30 +1,9 @@
 import requests
 import time
-from urllib3.util import connection as urllib3_connection
 from dataclasses import dataclass
-from urllib.parse import urlparse
-from .validators import resolve_public_ips, BlockedAddressError
+from .netguard import install_guard, BlockedAddressError
 
-_original_create_connection = urllib3_connection.create_connection
-
-def guarded_create_connection(address, *args, **kwargs):
-    host, port = address
-    host = host.strip("[]")
-    ips = resolve_public_ips(host, port)
-
-    last_error = None
-    for ip in ips:
-        try:
-            return _original_create_connection((ip, port), *args, **kwargs)
-        except OSError as e:
-            last_error = e
-    raise last_error
-
-def install_guard():
-    if urllib3_connection.create_connection is not guarded_create_connection:
-        urllib3_connection.create_connection = guarded_create_connection
-
-
+install_guard()
 
 @dataclass(frozen=True)
 class CheckOutcome:
@@ -35,8 +14,6 @@ class CheckOutcome:
 
 def check_url(url, timeout=10):
     start = time.monotonic()
-    
-    guard=install_guard()
 
     with requests.Session() as session:
         session.trust_env = False
