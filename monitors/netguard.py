@@ -1,15 +1,15 @@
 import ipaddress
 import socket
-
 from urllib3.util import connection as urllib3_connection
+from itertools import zip_longest
 
 class BlockedAddressError(Exception):
     pass
 
 def resolve_public_ips(host, port=None):
     
-    # By adding socktype=socket.SOCK_STREAM, we tell it: 
-    # "Only give me TCP records. Ignore UDP duplicates!"
+    # type=socket.SOCK_STREAM, for to ignore UDP and get only TCP records.(Removes duplicates)
+    
     infos = socket.getaddrinfo(host, port, type=socket.SOCK_STREAM)
     ips = []
     for info in infos:
@@ -32,6 +32,7 @@ def is_public_host(hostname):
         return None
     return True
 
+MAX_ADDRESSES = 4
 
 _original_create_connection = urllib3_connection.create_connection
 
@@ -41,7 +42,7 @@ def guarded_create_connection(address, *args, **kwargs):
     ips = resolve_public_ips(host, port)
 
     last_error = None
-    for ip in ips:
+    for ip in ips[:MAX_ADDRESSES]:
         try:
             return _original_create_connection((ip, port), *args, **kwargs)
         except OSError as e:
