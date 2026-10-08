@@ -32,6 +32,21 @@ def is_public_host(hostname):
         return None
     return True
 
+
+def interleave_families(ips):
+    """
+    Splits IP addresses into IPv4 and IPv6 groups and interleaves them.
+    Guarantees that a limited slice (e.g. [:4]) tests both IPv6 and IPv4 routes.
+    """
+
+    v4 = [ip for ip in ips if ":" not in ip]
+    v6 = [ip for ip in ips if ":" in ip]
+    ordered = []
+    for pair in zip_longest(v6, v4):
+        ordered.extend(ip for ip in pair if ip)
+    return ordered
+
+
 MAX_ADDRESSES = 4
 
 _original_create_connection = urllib3_connection.create_connection
@@ -41,8 +56,10 @@ def guarded_create_connection(address, *args, **kwargs):
     host = host.strip("[]")
     ips = resolve_public_ips(host, port)
 
+    ordered_ips = interleave_families(ips)
+
     last_error = None
-    for ip in ips[:MAX_ADDRESSES]:
+    for ip in ordered_ips[:MAX_ADDRESSES]:
         try:
             return _original_create_connection((ip, port), *args, **kwargs)
         except OSError as e:
