@@ -11,23 +11,22 @@ class Command(BaseCommand):
 
         reports = run_due_checks()
         for report in reports:
-            if report.status == "error":
-                self.stderr.write(f"{report.name}: Error: {report.detail}")
-            else:
-                self.stdout.write(f"{report.name}: {report.status.upper()}")
+            line = f"{report.name}: {report.status.upper()}"
+            if report.detail:
+                line += f" ({report.detail})"
+            stream = self.stderr if report.status == "error" else self.stdout
+            stream.write(line)
 
         counts = Counter(report.status for report in reports)
-        message = f"Checked {len(reports)}: {counts['up']} up, {counts['down']} down"
-
+        message = f"Checked {counts['up'] + counts['down']}: {counts['up']} up, {counts['down']} down"
+        if counts["skipped"]:
+            message += f", {counts['skipped']} skipped"
         if counts["error"]:
             message += f", {counts['error']} errored"
-            self.stdout.write(self.style.WARNING(f"\n{message}"))
 
-        else:
-            self.stdout.write(self.style.SUCCESS(f"\n{message}"))
-
-                
-            
+        healthy = not counts["skipped"] and not counts["error"]
+        style = self.style.SUCCESS if healthy else self.style.WARNING
+        self.stdout.write(style(message))
 
 
             

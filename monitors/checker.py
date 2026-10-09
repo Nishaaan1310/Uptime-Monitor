@@ -17,11 +17,12 @@ class CheckOutcome:
 REDIRECT_STATUSES = {301, 302, 303, 307, 308}
 MAX_REDIRECTS = 5
 MAX_ERROR_LENGTH = 300
+DEFAULT_TIMEOUT = 10
 
 def short(text):
     return text if len(text) <= MAX_ERROR_LENGTH else text[:MAX_ERROR_LENGTH] + "..."
 
-def check_url(url, timeout=10):
+def check_url(url, timeout=DEFAULT_TIMEOUT):
     start = time.monotonic()
     deadline = start + timeout
     current_url = url
