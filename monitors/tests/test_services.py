@@ -1,5 +1,6 @@
 import threading
 import time
+import uuid
 from unittest.mock import patch
 
 from django.test import TestCase
@@ -116,10 +117,10 @@ class RunDueChecksTests(TestCase):
         broken = make_monitor(self.owner, name="Broken")
         real_save = services.save_monitor
 
-        def flaky_save(monitor, outcome, started_at):
+        def flaky_save(monitor, outcome, started_at, token):
             if monitor.name == "Broken":
                 raise RuntimeError("disk full")
-            return real_save(monitor, outcome, started_at)
+            return real_save(monitor, outcome, started_at, token)
 
         with patch_check(ok), patch("monitors.services.save_monitor", side_effect=flaky_save):
             reports = by_name(run_due_checks())
@@ -244,6 +245,14 @@ class DeadlineTests(TestCase):
         self.assertEqual(waiting.status, Status.PENDING)
         self.assertIsNone(waiting.last_checked_at)
         self.assertEqual(waiting.next_check_at, waiting_due)    # still due on the next run
+
+    def test_a_skipped_monitor_that_cannot_be_released_is_an_error(self):
+        with patch("monitors.services.release_monitor", side_effect=RuntimeError("db down")):
+            report = services.record_skipped(make_monitor(self.owner, name="Waiting"), uuid.uuid4())
+
+        self.assertEqual(report.status, "error")
+        self.assertIn("could not release", report.detail)
+        self.assertIn("db down", report.detail)
 
 
 class RunChecksCommandTests(SimpleTestCase):

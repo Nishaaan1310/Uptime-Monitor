@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from django.conf import settings
 from django.core.validators import MinValueValidator
@@ -23,6 +24,8 @@ class Monitor(models.Model):
         default = Status.PENDING)
     last_checked_at = models.DateTimeField(null=True, blank=True)
     next_check_at = models.DateTimeField(default=timezone.now)
+    claimed_until = models.DateTimeField(null=True, blank=True)
+    claim_token = models.UUIDField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.name} ({self.url})"
