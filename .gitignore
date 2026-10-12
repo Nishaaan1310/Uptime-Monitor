@@ -2,3 +2,5 @@ notes.md
 .venv
 __pycache__/
 db.sqlite3
+.env
+data.json
