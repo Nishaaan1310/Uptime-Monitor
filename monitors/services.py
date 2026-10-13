@@ -20,10 +20,24 @@ class MonitorReport:
 
 GRACE_SECONDS = 10
 LEASE_MARGIN_SECONDS = 30
+WATCHDOG_MARGIN_SECONDS = 5
 
 def worst_case_seconds(count, max_workers):
     rounds = ceil(count/ max_workers)
     return rounds * DEFAULT_TIMEOUT + GRACE_SECONDS
+
+def lease_seconds(limit, max_workers, deadline_seconds=None):
+    longest_run = worst_case_seconds(limit, max_workers)
+    if deadline_seconds is not None:
+        longest_run = max(longest_run, deadline_seconds)
+    return longest_run + LEASE_MARGIN_SECONDS
+
+def run_time_limit_seconds(limit, max_workers):
+    """How long a whole run may last: just under the lease, so the process
+    is ended before its claims can be taken by anyone else."""
+    return lease_seconds(limit, max_workers) - WATCHDOG_MARGIN_SECONDS
+
+
 
 
 def next_due_time(scheduled, interval_seconds, started_at):
@@ -140,10 +154,7 @@ def run_due_checks(now=None, limit=100, max_workers=10, deadline_seconds=None):
     now = now or timezone.now()
     token = uuid.uuid4()
 
-    longest_run = worst_case_seconds(limit, max_workers)
-    if deadline_seconds is not None:
-        longest_run = max(longest_run, deadline_seconds)
-    lease = timedelta(seconds=longest_run + LEASE_MARGIN_SECONDS)
+    lease = timedelta(seconds=lease_seconds(limit, max_workers, deadline_seconds))
 
     monitors = claim_monitors(limit, now, lease, token)
     if not monitors:

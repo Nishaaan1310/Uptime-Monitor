@@ -24,7 +24,6 @@ from monitors.models import Status
 from monitors.services import MonitorReport, run_due_checks
 from .helpers import make_monitor, make_user
 
-
 def ok(url, timeout=10):
     return CheckOutcome(is_up=True, status_code=200, response_time_ms=5)
 
@@ -304,3 +303,18 @@ class NextDueTimeTests(SimpleTestCase):
         started = self.base + timedelta(seconds=30)
         result = services.next_due_time(self.base, 30, started)
         self.assertEqual(result, started + timedelta(seconds=30))
+
+
+class LeaseTests(SimpleTestCase):
+    def test_lease_is_the_worst_case_plus_the_margin(self):
+        expected = services.worst_case_seconds(100, 10) + services.LEASE_MARGIN_SECONDS
+        self.assertEqual(services.lease_seconds(100, 10), expected)
+
+    def test_a_longer_deadline_extends_the_lease(self):
+        self.assertGreater(services.lease_seconds(100, 10, deadline_seconds=1000),
+                           services.lease_seconds(100, 10))
+
+    def test_the_run_limit_is_between_the_worst_case_and_the_lease(self):
+        limit = services.run_time_limit_seconds(100, 10)
+        self.assertGreater(limit, services.worst_case_seconds(100, 10))
+        self.assertLess(limit, services.lease_seconds(100, 10))
