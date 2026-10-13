@@ -280,3 +280,27 @@ class RunChecksCommandTests(SimpleTestCase):
         out, err = self.run_command([])
         self.assertIn("Checked 0: 0 up, 0 down", out)
         self.assertEqual(err, "")
+
+
+class NextDueTimeTests(SimpleTestCase):
+    def setUp(self):
+        self.base = timezone.now()
+
+    def test_keeps_to_the_schedule_when_slightly_late(self):
+        result = services.next_due_time(self.base, 30, self.base + timedelta(seconds=10.5))
+        self.assertEqual(result, self.base + timedelta(seconds=30))
+
+    def test_lateness_does_not_add_up(self):
+        first = services.next_due_time(self.base, 30, self.base + timedelta(seconds=10))
+        second = services.next_due_time(first, 30, first + timedelta(seconds=10))
+        self.assertEqual(second, self.base + timedelta(seconds=60))
+
+    def test_a_long_outage_does_not_cause_a_burst(self):
+        started = self.base + timedelta(hours=1)
+        result = services.next_due_time(self.base, 30, started)
+        self.assertEqual(result, started + timedelta(seconds=30))
+
+    def test_exactly_on_the_next_due_time_moves_forward(self):
+        started = self.base + timedelta(seconds=30)
+        result = services.next_due_time(self.base, 30, started)
+        self.assertEqual(result, started + timedelta(seconds=30))

@@ -26,13 +26,23 @@ def worst_case_seconds(count, max_workers):
     return rounds * DEFAULT_TIMEOUT + GRACE_SECONDS
 
 
+def next_due_time(scheduled, interval_seconds, started_at):
+    #When a monitor is next due: keep to its schedule, but never schedule in the past.
+    interval = timedelta(seconds=interval_seconds)
+    candidate = scheduled + interval
+    if candidate <= started_at:
+        candidate = started_at + interval
+    return candidate
+
+
+
 def save_monitor(monitor, outcome, started_at, token):
     with transaction.atomic():
         updated = Monitor.objects.filter(pk=monitor.pk, claim_token=token
         ).update(
             status=Status.UP if outcome.is_up else Status.DOWN,
             last_checked_at=started_at,
-            next_check_at=started_at + timedelta(seconds=monitor.interval_seconds),
+            next_check_at=next_due_time(monitor.next_check_at, monitor.interval_seconds, started_at),
             claimed_until=None,
             claim_token=None,
         )
