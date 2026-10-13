@@ -91,7 +91,11 @@ DATABASES = {
         'PASSWORD': os.environ["DB_PASSWORD"],
         'HOST': os.environ.get("DB_HOST", "localhost"),
         'PORT': os.environ.get("DB_PORT", "5432"),
-    },     
+        'OPTIONS': {
+            "connect_timeout": 5,
+            "options": "-c statement_timeout=15000 -c lock_timeout=5000"
+        },
+    },    
 }
 
 
